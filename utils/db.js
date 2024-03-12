@@ -1,32 +1,52 @@
-import { MongoClient } from "mongodb";
+import { MongoClient } from 'mongodb';
 
 class DBClient {
-    constructor() {
-        this.host = process.env.DB_HOST || 'localhost';
-        this.port = process.env.DB_PORT || 27017;
-        this.database = process.env.DB_DATABASE || 'files_manage';
-        this.uri = `mongodb://${this.host}:${this.port}`;
-        
-        MongoClient.connect(this.uri, { useUnifiedTopology: true }, (error, client) => {
-            if (error) this.dbClient = false;
-            else this.dbClient = client.db(database);
-        });
-    
-    };
+  constructor() {
+    const host = process.env.DB_HOST || 'localhost';
+    const port = process.env.DB_PORT || 27017;
+    this.database = process.env.DB_DATABASE || 'files_manager';
+    const url = `mongodb://${host}:${port}/${this.database}`;
+    this.client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+    this.connected = false;
+    this.userCollection = null;
+    this.filesCollection = null;
+    this.connect();
+  }
 
-    isAlive() {
-        return !!this.dbClient;
-    };
+  async connect() {
+    try {
+      await this.client.connect();
+      this.connected = true;
+      this.userCollection = this.client.db(this.database).collection('users');
+      this.filesCollection = this.client.db(this.database).collection('files');
+    } catch (error) {
+      this.connected = false;
+    }
+  }
 
-    async nbUsers() {
-        return this.dbClient.collection("users").countDocuments();
-    };
+  isAlive() {
+    return (this.connected);
+  }
 
-    async nbFiles() {
-        return this.dbClient.collection("files").countDocuments();
-    };
-};
+  async nbUsers() {
+    let userCount = null;
+    try {
+      userCount = await this.userCollection.countDocuments();
+    } catch (err) {
+      console.log(err);
+    }
+    return (userCount);
+  }
 
-const dbClient = new DBClient();
+  async nbFiles() {
+    let filesCount = null;
+    try {
+      filesCount = await this.filesCollection.countDocuments();
+    } catch (err) {
+      console.log(err);
+    }
+    return (filesCount);
+  }
+}
 
-module.exports = dbClient;
+export default new DBClient();

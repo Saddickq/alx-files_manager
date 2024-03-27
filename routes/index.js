@@ -1,7 +1,9 @@
-import { Router } from "express";
-import { AppController } from "../controllers/AppController";
+import express from 'express';
+import appController from '../controllers/AppController';
 
-const router = Router();
+const router = express.Router();
 
-router.get('/status', AppController.getStatus);
-router.post('/users', UsersController.postNew)
+router.get('/status', appController.getStatus);
+router.get('/stats', appController.getStats);
+
+export default router;
